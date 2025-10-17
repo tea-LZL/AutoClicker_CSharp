@@ -38,8 +38,8 @@ class Program
     void RunClicker()
     {
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine("Clicker Ready, Z to Start/Stop, Q to Quit.");
-        Console.WriteLine($"Current Click Interval is {clickInterval} ms. Press O to Change Interval.");
+        Console.WriteLine("Ready, Action: Z, Quit: Q.");
+        Console.WriteLine($"Current Interval is {clickInterval} ms. Press O to Change Interval.");
         Console.ResetColor();
         
         while (true)
@@ -62,7 +62,7 @@ class Program
                     // Key was just pressed down
                     enableClicker = !enableClicker;
                     isHotkeyPressed = true;
-                    Console.WriteLine(enableClicker ? "Clicker Started" : "Clicker Stopped");
+                    Console.WriteLine(enableClicker ? "OK" : "Done");
                 }
             }
             else
@@ -77,7 +77,7 @@ class Program
     void AdjustClickInterval()
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("Enter new click interval in milliseconds:");
+        Console.WriteLine("Enter new interval in milliseconds:");
         Console.WriteLine(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         // Clear the input buffer
         while (Console.KeyAvailable)
@@ -92,7 +92,7 @@ class Program
         {
             clickInterval = newInterval;
             Console.WriteLine(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-            Console.WriteLine($"Click interval updated to {clickInterval} ms.");
+            Console.WriteLine($"interval updated to {clickInterval} ms.");
             Console.ResetColor();
             RunClicker();
         }
