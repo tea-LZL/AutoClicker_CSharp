@@ -1,0 +1,84 @@
+name: Build and Release AutoClicker
+
+on:
+  push:
+    branches: [ master, main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    strategy:
+      matrix:
+        runtime: [win-x64, win-x86, win-arm64]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore AutoClicker_CSharp.sln
+      
+    - name: Build solution
+      run: dotnet build AutoClicker_CSharp.sln --configuration Release --no-restore
+      
+    - name: Publish executable
+      run: |
+        dotnet publish AutoClicker_CSharp/AutoClicker_CSharp.csproj `
+          --configuration Release `
+          --runtime ${{ matrix.runtime }} `
+          --self-contained true `
+          --output ./publish/${{ matrix.runtime }} `
+          /p:PublishSingleFile=true `
+          /p:PublishTrimmed=true `
+          /p:IncludeNativeLibrariesForSelfExtract=true
+          
+    - name: Create archive
+      run: |
+        $archiveName = "AutoClicker-${{ matrix.runtime }}"
+        if ("${{ github.ref_type }}" -eq "tag") {
+          $archiveName += "-${{ github.ref_name }}"
+        } else {
+          $archiveName += "-${{ github.sha }}"
+        }
+        $archiveName += ".zip"
+        
+        Compress-Archive -Path "./publish/${{ matrix.runtime }}/*" -DestinationPath $archiveName
+        echo "ARCHIVE_NAME=$archiveName" >> $env:GITHUB_ENV
+      shell: powershell
+      
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AutoClicker-${{ matrix.runtime }}
+        path: ${{ env.ARCHIVE_NAME }}
+        retention-days: 30
+
+  create-release:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: artifacts/**/*.zip
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
